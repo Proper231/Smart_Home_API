@@ -69,8 +69,9 @@ def list_calendars():
         page_token = calendar_list.get('nextPageToken')
         if not page_token:
             break
-        '''
 
-c_list =SERVICE.calendarList().list().execute()
-for calendar_list_entry in c_list['items']:
-            print (calendar_list_entry['summary'])
+def list_calendars():
+    c_list =SERVICE.calendarList().list().execute()
+    for calendar_list_entry in c_list['items']:
+                print (calendar_list_entry['summary'])
+'''
