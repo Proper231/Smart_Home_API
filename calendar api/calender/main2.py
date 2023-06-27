@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+import requests
 import datetime
 import os.path
 from pprint import pprint
@@ -8,6 +8,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from pprint import pprint
+from Google import Create_Service, convert_to_RFC_datetime
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -50,13 +52,19 @@ request_body = {
 }
 
 #add calander
-#response = SERVICE.calendars().insert(body=request_body).execute()
-#print(response)
+def create_calendar(name_calendar):
+    request_body = {
+        'summary' : name_calendar
+    }
+    response = SERVICE.calendars().insert(body=request_body).execute()
+    print(response)
+
 
 
 
 #delete calander
-#SERVICE.calendars().delete(calendarId='ou1lal223ls2p2fdcdjb3p99jc@group.calendar.google.com').execute()
+def delete_calendar(ID):
+    SERVICE.calendars().delete(calendarId = ID).execute()
 
 #list calanders    
 '''
@@ -69,9 +77,106 @@ def list_calendars():
         page_token = calendar_list.get('nextPageToken')
         if not page_token:
             break
-
+'''
+'''
 def list_calendars():
     c_list =SERVICE.calendarList().list().execute()
     for calendar_list_entry in c_list['items']:
                 print (calendar_list_entry['summary'])
 '''
+def list_calendars():
+    response = SERVICE.calendarList().list(
+        maxResults = 250,
+        showDeleted = False,
+        showHidden = False
+    ).execute()
+
+    calendarItems = response.get('items')
+    nextPageToken = response.get('nextPageToken')
+
+    while nextPageToken:
+        response = SERVICE.calendarList().list(
+            MaxResults = 250,
+            showDeleted = False,
+            showHidden = False,
+            PageToken = nextPageToken
+        ).execute()
+        calendarItems.extend(response.get('items'))
+        nextPageToken = response.get('nextPageToken')
+
+    pprint(calendarItems)
+
+
+def update_Calendar(oldName, newName, desc, location):
+    oldName = oldName
+    response = SERVICE.calendarList().list().execute()
+    calendarItems = response.get('items')
+    myCalendar = filter(lambda x: oldName in x['summary'], calendarItems)
+    myCalendar = next(myCalendar, 'end')
+    print(myCalendar)
+
+
+    myCalendar['summary'] = newName
+    myCalendar['description'] == desc
+    myCalendar['location'] == location
+
+
+    SERVICE.calendars().update(calendarId = myCalendar['id'], body = myCalendar).execute()
+
+
+#update_Calendar('chicken', 'testing', 'hello world', 'paris, france')
+#create an Event
+'''
+colors = SERVICE.colors().get().execute()
+pprint(colors)
+
+hour_adjustment = -8
+event_request_body = {
+
+    'start' : {
+        'datetime' : convert_to_RFC_datetime(2023, 6, 22, 1, 12 + hour_adjustment, 30 ),
+        'timeZome' : 'Europe, Spain'
+    },
+    'end': {
+        'datetime' : convert_to_RFC_datetime(2023, 6, 22, 1, 14 + hour_adjustment, 30 ),
+        'timeZome' : 'Europe, Spain'
+    },
+
+    'summary' : "weird test", 
+    'description' : 'Testing',
+    'colorId' : 5,
+    'status' : 'confirmed',
+    'transparency' : 'opaque',
+    'visibiltiy' : 'private',
+    'location' : 'Zaragoza, Spain'
+}
+'''
+def add_event (summary, location, description, startTime, endtime):
+    event = {
+    'summary': summary,
+    'location': location,
+    'description': description,
+    'start': {
+        'dateTime': startTime,
+        'timeZone': 'Europe/Madrid',
+    },
+    'end': {
+        'dateTime': endtime,
+        'timeZone': 'Europe/Madrid',
+    },
+    'reminders': {
+        'useDefault': False,
+        'overrides': [
+        {'method': 'email', 'minutes': 24 * 60},
+        {'method': 'popup', 'minutes': 10},
+        ],
+    },
+    }
+
+    event = SERVICE.events().insert(calendarId='primary', body=event).execute()
+    print ('Event created: %s' % (event.get('htmlLink')))
+#time format
+#'2023-06-28T09:00:00'
+
+
+add_event('testing add event', 'univerity', 'testing', '2023-06-28T09:15:00', '2023-06-28T21:30:00')

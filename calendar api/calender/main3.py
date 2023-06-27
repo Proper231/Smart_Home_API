@@ -1,5 +1,5 @@
 from pprint import pprint
-from Google import Create_Service
+from Google import Create_Service, convert_to_RFC_datetime
 
 CLIENT_SECRET_FILE = 'credentials.json'
 API_NAME = 'calendar'
@@ -9,17 +9,22 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 service = Create_Service(CLIENT_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
 
 #request
-
+#request_body = {
+#     'summary' :'Smart Home Test'
+#}
 
 #add calendar
-def create_calendar(request_body):
+def create_calendar(name_calendar):
+    request_body = {
+        'summary' : name_calendar
+    }
     response = service.calendars().insert(body=request_body).execute()
     print(response)
 
 
 #delete calander
-def delete_calendar(calendarId):
-    service.calendars().delete(calendarId).execute()
+def delete_calendar(ID):
+    service.calendars().delete(calendarId = ID).execute()
 
 "test token for security"    
 '''
@@ -34,9 +39,51 @@ def list_calendars():
         if not page_token:
             break
 '''
+#testing page token
+'''
+response = SERVICE.calendarList().list(
+    maxResults = 250,
+    showDeleted = False,
+    showHidden = False
+).execute()
+
+calendarItems = response.get('items')
+nextPageToken = response.get('nextPageToken')
+
+while nextPageToken:
+    response = SERVICE.calendarList().list(
+        MaxResults = 250,
+        showDeleted = False,
+        showHidden = False,
+        PageToken = nextPageToken
+    ).execute()
+    calendarItems.extend(response.get('items'))
+    nextPageToken = response.get('nextPageToken')
+
+print(calendarItems)
+'''
 
 #same as above but without token
 def list_calendars():
-    c_list = service.calendarList().list().execute()
-    for calendar_list_entry in c_list['items']:
+    response = service.calendarList().list().execute()
+    for calendar_list_entry in response['items']:
                 print (calendar_list_entry['summary'])
+
+
+def update_Calendar(oldName, newName, desc, location):
+    oldName = oldName
+    response = service.calendarList().list().execute()
+    calendarItems = response.get('items')
+    myCalendar = filter(lambda x: oldName in x['summary'], calendarItems)
+    myCalendar = next(myCalendar)
+    print(myCalendar)
+
+
+    myCalendar['summary'] = 'tester'
+    myCalendar['description'] == '2nd test'
+    myCalendar['location'] == 'where'
+
+
+    service.calendars().update(calendarId = myCalendar['id'], body = myCalendar).execute()
+
+list_calendars()
